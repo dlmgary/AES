@@ -10,3 +10,7 @@ This is a custom implementation of the Advanced Encryption Standard (AES) using 
 - Performance measurer (timer) 
 - Usable for all printable characters
 
+This implementation was implemented using the standards:
+
+- FIPS PUB 197: Advanced Encryption Standard (AES) (https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.197.pdf)
+- ISO/IEC 18033-3: Information technology – Security techniques – Encryption algorithms – Part 3: Block ciphers (https://www.iso.org/standard/54531.html)
