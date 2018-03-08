@@ -1,4 +1,5 @@
-# AES
+# AES Cryptology Project
+
 This is a custom implementation of the Advanced Encryption Standard (AES) using Python. The main features of this implementation include:
 
 - Encryption/Decryption
