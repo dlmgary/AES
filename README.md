@@ -4,7 +4,7 @@ This is a custom implementation of the Advanced Encryption Standard (AES) using 
 
 - Encryption/Decryption
 - 16 cycles
-- 16 byte block
+- 128 bit block sequency 
 - 512 bit key
 - No use of external libraries
 - Performance measurer (timer) 
