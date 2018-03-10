@@ -30,3 +30,25 @@ AES 256   | 256 bits        | 4 blocks        | 14 rounds          |
 AES 512   | 512 bits        | 4 blocks        | 22 rounds ?        |
 
 
+```
+Cipher(byte in[4*Nb], byte out[4*Nb], word w[Nb*(Nr+1)]) 
+begin
+
+   byte  state[4,Nb]
+   state = in
+   AddRoundKey(state, w[0, Nb-1])
+   
+   for round = 1 step 1 to Nr–1
+      SubBytes(state)
+      ShiftRows(state)
+      MixColumns(state)
+      AddRoundKey(state, w[round*Nb, (round+1)*Nb-1])
+   end for
+
+   SubBytes(state)
+   ShiftRows(state)
+   
+   AddRoundKey(state, w[Nr*Nb, (Nr+1)*Nb-1])
+   out = state
+end
+```
