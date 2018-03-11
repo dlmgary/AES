@@ -125,5 +125,5 @@ d | 70   3e   b5   66   48   03   f6   0e   61   35   57   b9   86   c1   1d   9
 e | e1   f8   98   11   69   d9   8e   94   9b   1e   87   e9   ce   55   28   df
 f | 8c   a1   89   0d   bf   e6   42   68   41   99   2d   0f   b0   54   bb   16
 
-S-Box AES
+S-box: substitution values for the byte xy (in hexadecimal format).
 ```
