@@ -27,8 +27,7 @@ https://en.wikipedia.org/wiki/Finite_field_arithmetic
 | AES 128   | 4 (128 bits) | 4 blocks        | 10 rounds          | 
 | AES 192   | 6 (192 bits) | 4 blocks        | 12 rounds          | 
 | AES 256   | 8 (256 bits) | 4 blocks        | 14 rounds          |
-| AES 512   | 16 (512 bits)| 4 blocks        | 22 rounds ?        |
-
+| **AES 512**   | **16 (512 bits)**| **4 blocks**        | **22 rounds ?**        |
 
 ```
 Cipher(byte in[4*Nb], byte out[4*Nb], word w[Nb*(Nr+1)]) 
