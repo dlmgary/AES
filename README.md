@@ -150,3 +150,38 @@ f | 17   2b   04   7e   ba   77   d6   26   e1   69   14   63   55   21   0c   7
 
 Inverse S-box: substitution values for the byte xy (in hexadecimal format).
 ```
+
+
+
+```
+EqInvCipher(byte in[4*Nb], byte out[4*Nb], word dw[Nb*(Nr+1)]) 
+begin
+   byte state[4,Nb]
+   state = in
+   
+   AddRoundKey(state, dw[Nr*Nb, (Nr+1)*Nb-1])
+   
+   for round = Nr-1 step -1 downto 1 InvSubBytes(state)
+      InvShiftRows(state)
+      InvMixColumns(state)
+      AddRoundKey(state, dw[round*Nb, (round+1)*Nb-1])
+   end for
+   
+   InvSubBytes(state)
+   InvShiftRows(state)
+   AddRoundKey(state, dw[0, Nb-1])
+   out = state
+end
+
+For the Equivalent Inverse Cipher, the following pseudo code is added at the end of the Key Expansion routine (Sec. 5.2):
+
+   for i = 0 step 1 to (Nr+1)*Nb-1
+      dw[i] = w[i]
+   end for
+   
+   for round = 1 step 1 to Nr-1 
+      InvMixColumns(dw[round*Nb, (round+1)*Nb-1])
+   end for
+   
+Note that, since InvMixColumns operates on a two-dimensional array of bytes while the Round Keys are held in an array of words, the call to InvMixColumns in this code sequence involves a change of type (i.e. the input to InvMixColumns() is normally the State array, which is considered to be a two-dimensional array of bytes, whereas the input here is a Round Key computed as a one-dimensional array of words).
+```
