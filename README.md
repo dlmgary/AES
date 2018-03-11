@@ -53,6 +53,34 @@ begin
 end
 ```
 
+```
+KeyExpansion(byte key[4*Nk], word w[Nb*(Nr+1)], Nk) 
+begin
+   word temp
+   i=0
+   
+   while (i < Nk)
+      w[i] = word(key[4*i], key[4*i+1], key[4*i+2], key[4*i+3]) i = i+1
+   end while
+   
+   i = Nk
+   
+   while (i < Nb * (Nr+1)]
+      temp = w[i-1]
+      
+      if (i mod Nk = 0)
+         temp = SubWord(RotWord(temp)) xor Rcon[i/Nk] else if (Nk > 6 and i mod Nk = 4)
+         temp = SubWord(temp)
+      end if
+      
+      w[i] = w[i-Nk] xor temp
+      i=i+1 
+   end while
+end
+
+Note that Nk=4, 6, and 8 do not all have to be implemented; they are all included in the conditional statement above for conciseness. Specific implementation requirements for the Cipher Key are presented in Sec. 6.1.
+```
+
 
 
 |X | 0 |1  |2  |3  |4  |5  |6  |7  |8  |9  |a  |b  |c  |d  |e  |f  |
