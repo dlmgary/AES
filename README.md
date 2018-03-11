@@ -24,10 +24,10 @@ https://en.wikipedia.org/wiki/Finite_field_arithmetic
 
 | Algorithm | Key Length (Nk) | Block Size (Nb) | Number Rounds (Nr) | 
 | --------- | --------------- | --------------- | ------------------ | 
-| AES 128   | 128 bits        | 4 blocks        | 10 rounds          | 
-| AES 192   | 192 bits        | 4 blocks        | 12 rounds          | 
-| AES 256   | 256 bits        | 4 blocks        | 14 rounds          |
-| AES 512   | 512 bits        | 4 blocks        | 22 rounds ?        |
+| AES 128   | 4 (128 bits) | 4 blocks        | 10 rounds          | 
+| AES 192   | 6 (192 bits) | 4 blocks        | 12 rounds          | 
+| AES 256   | 8 (256 bits) | 4 blocks        | 14 rounds          |
+| AES 512   | 16 (512 bits)| 4 blocks        | 22 rounds ?        |
 
 
 ```
