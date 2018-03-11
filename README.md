@@ -60,7 +60,8 @@ begin
    i=0
    
    while (i < Nk)
-      w[i] = word(key[4*i], key[4*i+1], key[4*i+2], key[4*i+3]) i = i+1
+      w[i] = word(key[4*i], key[4*i+1], key[4*i+2], key[4*i+3]) 
+      i = i+1
    end while
    
    i = Nk
