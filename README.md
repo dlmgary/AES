@@ -82,6 +82,27 @@ end
 Note that Nk=4, 6, and 8 do not all have to be implemented; they are all included in the conditional statement above for conciseness. Specific implementation requirements for the Cipher Key are presented in Sec. 6.1.
 ```
 
+```
+InvCipher(byte in[4*Nb], byte out[4*Nb], word w[Nb*(Nr+1)]) 
+begin
+   byte state[4,Nb]
+   state = in
+   
+   AddRoundKey(state, w[Nr*Nb, (Nr+1)*Nb-1])
+   
+   for round = Nr-1 step -1 downto 1
+      InvShiftRows(state)
+      InvSubBytes(state) 
+      AddRoundKey(state, w[round*Nb, (round+1)*Nb-1])
+      InvMixColumns(state)
+   end for
+   
+   InvShiftRows(state)
+   InvSubBytes(state)
+   AddRoundKey(state, w[0, Nb-1])
+   out = state
+end
+```
 
 
 |X | 0 |1  |2  |3  |4  |5  |6  |7  |8  |9  |a  |b  |c  |d  |e  |f  |
