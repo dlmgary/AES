@@ -79,7 +79,8 @@ begin
    end while
 end
 
-Note that Nk=4, 6, and 8 do not all have to be implemented; they are all included in the conditional statement above for conciseness. Specific implementation requirements for the Cipher Key are presented in Sec. 6.1.
+Note that Nk=4, 6, and 8 do not all have to be implemented; they are all included in the conditional statement above for conciseness.
+Specific implementation requirements for the Cipher Key are presented in Sec. 6.1.
 ```
 
 ```
