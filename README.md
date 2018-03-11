@@ -78,10 +78,8 @@ begin
       i=i+1 
    end while
 end
-
-Note that Nk=4, 6, and 8 do not all have to be implemented; they are all included in the conditional statement above for conciseness.
-Specific implementation requirements for the Cipher Key are presented in Sec. 6.1.
 ```
+Note that Nk=4, 6, and 8 do not all have to be implemented; they are all included in the conditional statement above for conciseness. Specific implementation requirements for the Cipher Key are presented in Sec. 6.1.
 
 ```
 InvCipher(byte in[4*Nb], byte out[4*Nb], word w[Nb*(Nr+1)]) 
@@ -174,6 +172,7 @@ begin
 end
 ```
 For the Equivalent Inverse Cipher, the following pseudo code is added at the end of the Key Expansion routine (Sec. 5.2):
+
 ```
    for i = 0 step 1 to (Nr+1)*Nb-1
       dw[i] = w[i]
