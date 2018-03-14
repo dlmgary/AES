@@ -150,37 +150,33 @@ class State_Array():
    Nk = 0       # Key length
    Nb = 4       # Block size (always 4)
    Ncol = 4     # Number of columns in state (always 4)
-   Nrow = 0     # Number of rows in state 
    matrix = []
    round_key = ""
       
-   def __init__(self, Nk, key):
-      if Nk is 128:
-         self.Nr = 10
-      elif Nk is 192:
-         self.Nr = 12
-      elif Nk is 256:
-         self.Nr = 14
-      else:
-         exit(0)
-      
+   def __init__(self, Nk, key, rounds):
+      self.Nr = rounds
       self.Nk = Nk
-      self.Nrow = Nk/32
       self.round_key = key
 
-      # populates matrix with zeroes 
-      for col in range(0, self.Nrow):
-         self.matrix.append([0]*self.Ncol)
+      # Creates 4x4 matrix and populates matrix with zeroes 
+      for row in range(0, 4):
+         new = []
+         for col in range(0, 4):
+            new.append(0)
+         self.matrix.append(new)
+#            self.matrix[row][col] = 0
+#      for col in range(0, self.Nrow):
+#         self.matrix.append([0]*self.Ncol)
 
    
    def get_state(self):
       return self.matrix
 
-   def get_row_no(self):
-      return self.Nrow
+#   def get_row_no(self, n):
+#      return self.matrix[n]
       
-   def get_col_no(self):
-      return self.Ncol
+#   def get_col_no(self):
+#      return self.Ncol
    
    def get_row(self, row_no):
       return self.matrix[row_no][::]
@@ -200,41 +196,83 @@ class State_Array():
          row[col_no] = new_col[i]
          i += 1
 
-   def add_round_key(self, r_key_array, row_no):
-      for i, item in enumerate(self.get_row(row_no)):
-         old_value = self.matrix[row_no][i]
-         self.matrix[row_no][i] = old_value ^ r_key_array[i]
+   def add_round_key(self, r_key_array, col_no):
+      for i in range (0, 4):
+         old_value = self.matrix[i][col_no]
+#         print "{} ^ {}".format(hex(old_value), hex(r_key_array[i]))
+         self.matrix[i][col_no] = old_value ^ r_key_array[i]
 
    def get_state_array(self):
       return self.matrix
    
-
+   def sub_bytes(self):
+      for i in range (0, 4):
+         row = self.get_row(i)
+         new_row =  get_bytes(sub_word(array_to_int(row, 8)),32)
+         self.set_row(i, new_row)
+         
+         
+   def set_initial_state(self, input_array):
+#      s[r,c]=in[r+4c]
+      for row in range (0, 4):
+         for column in range(0,4):
+            self.matrix[row][column] = input_array[row+4*column]
+   
+   ##
+   # RotWord() perform a cyclic permutation
+   # Input  : list [a0,a1,a2,a3] 
+   # Returns: list [a1,a2,a3,a0]
+   ##
+   def RotWord(word_list):
+      new_list = []
+      new_list = word_list[1:4]
+      new_list.append(word_list[0])
+      return new_list
+   
+   def shift_columns(self):
+      for i in range (0,4):
+         row = self.get_row(i)
+         for _ in range (0, i):
+            row = RotWord(row)
+            self.set_row(i, row)
+      
 def encrypt_plain_text(plain_text, key_list):
    plain_text = plain_text
    cypher_tex = ""
    key_list = key_list
-   
-   new_state = State_Array(128, "")
+    
+   state = State_Array(128, "", 10)
    
    Nb = 4 
    Nr = 11
    
+   state.set_initial_state(get_bytes(plain_text, 128))
+      
    ## Pupulate state array with first 4 keys
    for i in range(0, Nb):
       new_col_vals = get_bytes(key_list[i], 32)
-      new_state.set_col(i, new_col_vals)
+#      print new_col_vals
+      state.add_round_key(new_col_vals, i)
+   
    
    ## Does loops throguh the algorith Nr-1 times
-   for i in range(0, Nr)
+#   for i in range(0, Nr):
+#      SubBytes(state)
+   state.sub_bytes()
+   state.shift_columns()
+      
+
+#      MixColumns(state)
+#      AddRoundKey(state, w[round*Nb, (round+1)*Nb-1])
     
-   array =  new_state.get_state_array()
-   print array
    ## Prints array in hex
+   array =  state.get_state_array()
    for row in array:
       print ""
       for column in row:
          print hex(column).rstrip("L"),
-   
+   print ""
+   ## 
       
     
 def main(): 
