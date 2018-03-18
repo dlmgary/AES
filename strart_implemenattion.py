@@ -22,6 +22,29 @@ def hex_to_str_align(hex_input, sizeof_in_bits):
    return "0x" + string
 
 ## 
+# @Input hex_input: number 
+# @Input sizeof_in_bits: size in bits of @hex_input
+# @Return : Convers the input number to a binary string including 
+#            all non-significant zeroes
+## 
+def hex_to_bin_string_align(hex_input, sizeof_in_bits):
+   bin_strings = ["0000", "0001", "0010", "0011", 
+                  "0100", "0101", "0110", "0111", 
+                  "1000", "1001", "1010", "1011", 
+                  "1100", "1101", "1110", "1111"]
+
+   string = ""
+   
+   str_aling = hex_to_str_align(hex_input, sizeof_in_bits)
+   
+   tmp = str_aling.lstrip("0x")
+   
+   for i, item in enumerate(tmp):
+      string = string + bin_strings[int(item)]
+   
+   return string
+
+## 
 #
 #
 ##
@@ -119,7 +142,7 @@ def key_expansion(key, Nk):
       Nk = 14
 
    else:
-      print "[!] Key expansion error!"
+      logging.warning("[!] Key expansion error!")
       exit(0)
 
    for i in range(Nk, 4*(Nr+1)):
@@ -171,12 +194,6 @@ class State_Array():
    
    def get_state(self):
       return self.matrix
-
-#   def get_row_no(self, n):
-#      return self.matrix[n]
-      
-#   def get_col_no(self):
-#      return self.Ncol
    
    def get_row(self, row_no):
       return self.matrix[row_no][::]
@@ -237,7 +254,7 @@ class State_Array():
             self.set_row(i, row)
    
    
-#
+# 
 #   MixColumns() operates on a column-by-column manner. 
 # theats each columns a four-term polynomial. In this case each 
 # term represent an 8-bit value. The columns are considered as 
@@ -300,24 +317,18 @@ def encrypt_plain_text(plain_text, key_list):
    print ""
    ## 
       
+      
+   
+
 ## Input is two 8-bit strings
-#def multiply(b1, b2):
 #
-def multiply():
-   
-   #
-   # Make sure that all elements are alignemd to 8 bits....
-   b1 = 0x57
-   b2 = 0x83
-   
+def multiply(int1, int2):
+    
    tmp = 0x0000
    
-   sb1 = "0" + bin(b1).lstrip("0b")
-   sb2 = bin(b2).lstrip("0b")
-   
-   logging.info("b1 = {} or {}".format(bin(b1), hex(b1)))
-   logging.info("b2 = {} or {}".format(bin(b2), hex(b2)))
-   
+   sb1 = hex_to_bin_string_align(int1, 8)
+   sb2 = hex_to_bin_string_align(int2, 8)
+
  
    # Iterates though all elements in b1 and b2 and multiply them
    for i, item in enumerate(sb1):
@@ -326,8 +337,8 @@ def multiply():
 
       if item == 0: 
          continue
-         
-      logging.info("b1[{}] = {}  x^{}".format(i, item, power_b1))
+          
+      logging.debug("b1[{}] = {}  x^{}".format(i, item, power_b1))
     
       for i, item in enumerate(sb2):
          item = int(item)
@@ -336,10 +347,10 @@ def multiply():
          if item == 0: 
             continue
          
-         logging.info("\t\tb2[{}] = {}  x^{}".format(i, item, power_b2))
+         logging.debug("\t\tb2[{}] = {}  x^{}".format(i, item, power_b2))
          tmp = tmp ^ (1 << (power_b1 + power_b2))
 
-   logging.info("[+] Product is {}".format(bin(tmp)))
+   logging.info("multiply() returns:\n\t{} {}".format(bin(tmp), format(type(bin(tmp)))))
    return bin(tmp)
    
 ##   
@@ -347,9 +358,10 @@ def multiply():
 # x^8 + x^4 + x^3 + x + 1 == 0b100011011 == 
 #
 # input: string representing binary with format "0b0000..."
-def modular_division():
+##
+def modular_division(int1):
    ## original inputs
-   b1 = "0b10101101111001"
+   b1 = int1
    irr_poly = bin(0b100011011)
    
    ## return value from modular division
@@ -363,28 +375,22 @@ def modular_division():
    
    while(True):
       if poly_degree >= b1_degree:
-         print "b1 {}d. Irr {}d".format(b1_degree, poly_degree)
-         print "exit"
          break
-      
 
       quotient = b1_degree - poly_degree
-      print "Quotient =\t{}".format(quotient)
       intermediate = int(irr_poly,2) << int(quotient)
-      
-      print "sb1 {} {}".format(sb1, type(sb1))
-       
+             
 #   if type(sb1) is str:
       reminder = intermediate ^ int(sb1,2)
 #      else:
 #         reminder = intermediate ^ sb1
 #
-      print "sb1:\t\t{}\t{}".format(sb1, type(sb1))
-      print "intermediate:\t{}\t{}".format(bin(intermediate).lstrip("0b"), type(intermediate))
-      print "Reminder:\t{}\t{}".format(bin(reminder).lstrip("0b"), type(reminder))
+      logging.debug("sb1:\t\t{}\t{}".format(sb1, type(sb1)))
+      logging.debug("intermediate:\t{}\t{}".format(bin(intermediate).lstrip("0b"), type(intermediate)))
+      logging.debug("Reminder:\t{}\t{}".format(bin(reminder).lstrip("0b"), type(reminder)))
       sb1 = reminder
       
-      ## Update degree of polynomial
+      ## Update degree of polynomial  
       sb1 = bin(sb1).lstrip("0b")
       
       for i, item in enumerate(sb1):
@@ -394,27 +400,25 @@ def modular_division():
 
          elif int(item) == 1:
             b1_degree = len(sb1) -1 - i
-            print "Bin degree:\t{}\n".format(b1_degree)
             break 
-         
-   print str(sb1)
+      
+   logging.info("modular_division returns:\n\t0b{} {}".format(str(sb1), type(str(sb1)) ))
    return "0b" + str(sb1)
    
    
    
 def main(): 
-#   logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
+#   logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
 
 #   input_str = 0x3243f6a8885a308d313198a2e0370734
 #   cypher_key_128 = 0x2b7e151628aed2a6abf7158809cf4f3c
 #   round_keys = key_expansion(cypher_key_128, 4)
-#
-#   
 #   encrypt_plain_text(input_str, round_keys)
 
-   multiply()
-   modular_division()
+
+   tmp = multiply(0x57, 0x83)
+   print modular_division(tmp)
 
 #   new_state.set_row(2, [5, 5, 5, 5])
 #   new_state.set_col(3, [10,12,14,16,40,34,12,1])
@@ -434,6 +438,6 @@ if __name__ == "__main__":
 
 
 
-
+ 
 
 
