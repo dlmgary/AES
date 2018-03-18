@@ -10,7 +10,9 @@ while i < 20:
    i += 1
    element = xtime(element)
    print "{}{}, ".format(hex(element), "000000")
-    
+   
+for i in range(0,16):
+   print bin(i)
 #
 #for i in range (0,40):
 #   if i % 8 == 0:

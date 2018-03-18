@@ -6,11 +6,16 @@ import logging
 s_box = aes_constants.S_BOX
 s_box_inv = aes_constants.S_BOX_INV
 Rcon = aes_constants.RCON
-
          
-def hex_to_str_align(hex_input, sizeof_in_bits):
-   sting = ""
+def xtime(byte):
+   bit_7 = 0x80
+   if (byte & bit_7) == 0:
+      return byte << 1
+   else:
+      return (byte << 1 ^ 0x1b) & 0xFF
+
    
+def hex_to_str_align(hex_input, sizeof_in_bits):
    if type(hex_input) is int or long:
          string = str(hex(hex_input))
 
@@ -18,7 +23,7 @@ def hex_to_str_align(hex_input, sizeof_in_bits):
 
    while (len(string) < sizeof_in_bits/4):
       string = "0" + string
-      
+
    return "0x" + string
 
 ## 
@@ -40,7 +45,7 @@ def hex_to_bin_string_align(hex_input, sizeof_in_bits):
    tmp = str_aling.lstrip("0x")
    
    for i, item in enumerate(tmp):
-      string = string + bin_strings[int(item)]
+      string = string + bin_strings[int(item,16)]
    
    return string
 
@@ -154,8 +159,8 @@ def key_expansion(key, Nk):
          temp_key = temp_key ^ Rcon[i/Nk]
          temp_key = temp_key ^ w[i-Nk]
          w.append(temp_key) 
-         logging.info("[+] round key\t{}:\t{}".format(4+i, hex(temp_key)))
-
+         
+         logging.debug("[+] round key\t{}:\t{}".format(4+i, hex(temp_key)))
          continue
 
       temp_key = temp_key ^ w[i-Nk]
@@ -167,7 +172,144 @@ def key_expansion(key, Nk):
 
    return w
    
+
+
+## Input is two 8-bit strings
+#
+def multiply(int1, int2):
+    
+   tmp = 0x0000
    
+   sb1 = hex_to_bin_string_align(int1, 8)
+   sb2 = hex_to_bin_string_align(int2, 8)
+
+ 
+   # Iterates though all elements in b1 and b2 and multiply them
+   for i, item in enumerate(sb1):
+      item = int(item)
+      power_b1 = 7-i
+
+      if item == 0: 
+         continue
+          
+      logging.debug("b1[{}] = {}  x^{}".format(i, item, power_b1))
+    
+      for i, item in enumerate(sb2):
+         item = int(item)
+         power_b2 = 7-i
+         
+         if item == 0: 
+            continue
+         
+         logging.debug("\t\tb2[{}] = {}  x^{}".format(i, item, power_b2))
+         tmp = tmp ^ (1 << (power_b1 + power_b2))
+
+   logging.info("multiply() returns:\n\t{} {}".format(bin(tmp), format(type(bin(tmp)))))
+   return bin(tmp)
+   
+##   
+# Irreducible polinomial is 
+# x^8 + x^4 + x^3 + x + 1 == 0b100011011 == 
+#
+# input: string representing binary with format "0b0000..."
+##
+def modular_division(int1):
+   ## original inputs
+   b1 = int1
+   irr_poly = bin(0b100011011)
+   
+   ## return value from modular division
+   temp = 0x00 
+   
+   ## get binary part and powerst
+   spoly = irr_poly.lstrip("0b")
+   sb1 = b1.lstrip("0b")
+   b1_degree = len(sb1)-1
+   poly_degree = len(spoly)-1
+   
+   while(True):
+      if poly_degree >= b1_degree:
+         break
+
+      quotient = b1_degree - poly_degree 
+      intermediate = int(irr_poly,2) << int(quotient)
+             
+#   if type(sb1) is str:
+      reminder = intermediate ^ int(sb1,2)
+#      else:
+#         reminder = intermediate ^ sb1
+#
+      logging.debug("sb1:\t\t{}\t{}".format(sb1, type(sb1)))
+      logging.debug("intermediate:\t{}\t{}".format(bin(intermediate).lstrip("0b"), type(intermediate)))
+      logging.debug("Reminder:\t{}\t{}".format(bin(reminder).lstrip("0b"), type(reminder)))
+      sb1 = reminder
+      
+      ## Update degree of polynomial  
+      sb1 = bin(sb1).lstrip("0b")
+      
+      for i, item in enumerate(sb1):
+         if int(item) == 0:
+            b1_degree = len(sb1) -1  - i 
+            continue
+
+         elif int(item) == 1:
+            b1_degree = len(sb1) -1 - i
+            break 
+      
+   logging.info("modular_division returns:\n\t0b{} {}".format(str(sb1), type(str(sb1)) ))
+   return "0b" + str(sb1)
+   
+
+##   
+# Irreducible polinomial is 
+# x^8 + x^4 + x^3 + x + 1 == 0b100011011 == 
+#
+# input: string representing binary with format "0b0000..."
+##
+def modular_division_2(int1, modulus_bin):
+   ## original inputs
+   b1 = str(bin(int1))
+   irr_poly = str(bin(modulus_bin))
+   
+   ## return value from modular division
+   temp = 0x00 
+   
+   ## get binary part and powerst
+   spoly = irr_poly.lstrip("0b")
+   sb1 = b1.lstrip("0b")
+   b1_degree = len(sb1)-1
+   poly_degree = len(spoly)-1
+   
+   while(True): 
+      if poly_degree > b1_degree:
+         break
+
+      quotient = b1_degree - poly_degree
+      intermediate = int(irr_poly,2) << int(quotient)
+      reminder = intermediate ^ int(sb1,2)
+      sb1 = reminder
+
+      logging.debug("sb1:\t\t{}\t{}".format(sb1, type(sb1)))
+      logging.debug("intermediate:\t{}\t{}".format(bin(intermediate).lstrip("0b"), type(intermediate)))
+      logging.debug("Reminder:\t{}\t{}".format(bin(reminder).lstrip("0b"), type(reminder)))
+   
+      ## Update degree of polynomial  
+      sb1 = bin(sb1).lstrip("0b")
+      
+      for i, item in enumerate(sb1):
+         if int(item) == 0:
+            b1_degree = len(sb1) -1 - i 
+            continue
+
+         elif int(item) == 1:
+            b1_degree = len(sb1) -1 - i
+            break 
+      
+   logging.info("modular_division returns:\n\t0b{} {}".format(str(sb1), type(str(sb1))))
+   return "0b" + str(sb1)
+
+
+
 class State_Array():
    Nr = 0       # Number of rounds
    Nk = 0       # Key length
@@ -252,8 +394,7 @@ class State_Array():
          for _ in range (0, i):
             row = RotWord(row)
             self.set_row(i, row)
-   
-   
+
 # 
 #   MixColumns() operates on a column-by-column manner. 
 # theats each columns a four-term polynomial. In this case each 
@@ -269,15 +410,21 @@ class State_Array():
 # S'[1,c] = S[0,c] + ({02}*S[1,c]) + ({03}*S[2,c]) + S[3,c]
 # S'[2,c] = S[0,c] + S[1,c] + ({02}*S[2,c]) + ({03}*S[3,c])
 # S'[3,c] = ({03}*S[0,c]) + S[1,c] + S[2,c] + ({02}*S[3,c])
-#
-#
-
-
-
-   
-   def mix_columns():
+#  
+   def mix_columns(self):
       for i in range (0, 4):
-         self.get_col(i)
+         new_column = []
+         c = self.get_col(i)
+         new_column.append(xtime(c[0]) ^ (xtime(c[1])^c[1]) ^ c[2] ^ c[3])
+         new_column.append(c[0] ^ xtime(c[1]) ^ (xtime(c[2])^c[2]) ^ c[3])
+         new_column.append(c[0] ^ c[1] ^ (xtime(c[2])) ^ (xtime(c[3])^c[3]))
+         new_column.append(xtime(c[0])^c[0] ^ c[1] ^ c[2] ^ (xtime(c[3])))
+         self.set_col(i, new_column)
+         logging.debug("mix_columns:\n\
+         \tNew column[{}] = {}".format(i, new_column))   
+
+
+
       
 def encrypt_plain_text(plain_text, key_list):
    plain_text = plain_text
@@ -303,9 +450,8 @@ def encrypt_plain_text(plain_text, key_list):
 #      SubBytes(state)
    state.sub_bytes()
    state.shift_columns()
-      
+   state.mix_columns()
 
-#      MixColumns(state)
 #      AddRoundKey(state, w[round*Nb, (round+1)*Nb-1])
     
    ## Prints array in hex
@@ -317,108 +463,39 @@ def encrypt_plain_text(plain_text, key_list):
    print ""
    ## 
       
-      
-   
 
-## Input is two 8-bit strings
-#
-def multiply(int1, int2):
-    
-   tmp = 0x0000
-   
-   sb1 = hex_to_bin_string_align(int1, 8)
-   sb2 = hex_to_bin_string_align(int2, 8)
-
- 
-   # Iterates though all elements in b1 and b2 and multiply them
-   for i, item in enumerate(sb1):
-      item = int(item)
-      power_b1 = 7-i
-
-      if item == 0: 
-         continue
-          
-      logging.debug("b1[{}] = {}  x^{}".format(i, item, power_b1))
-    
-      for i, item in enumerate(sb2):
-         item = int(item)
-         power_b2 = 7-i
-         
-         if item == 0: 
-            continue
-         
-         logging.debug("\t\tb2[{}] = {}  x^{}".format(i, item, power_b2))
-         tmp = tmp ^ (1 << (power_b1 + power_b2))
-
-   logging.info("multiply() returns:\n\t{} {}".format(bin(tmp), format(type(bin(tmp)))))
-   return bin(tmp)
-   
-##   
-# Irreducible polinomial is 
-# x^8 + x^4 + x^3 + x + 1 == 0b100011011 == 
-#
-# input: string representing binary with format "0b0000..."
-##
-def modular_division(int1):
-   ## original inputs
-   b1 = int1
-   irr_poly = bin(0b100011011)
-   
-   ## return value from modular division
-   temp = 0x00 
-   
-   ## get binary part and powerst
-   spoly = irr_poly.lstrip("0b")
-   sb1 = b1.lstrip("0b")
-   b1_degree = len(sb1)-1
-   poly_degree = len(spoly)-1
-   
-   while(True):
-      if poly_degree >= b1_degree:
-         break
-
-      quotient = b1_degree - poly_degree
-      intermediate = int(irr_poly,2) << int(quotient)
-             
-#   if type(sb1) is str:
-      reminder = intermediate ^ int(sb1,2)
-#      else:
-#         reminder = intermediate ^ sb1
-#
-      logging.debug("sb1:\t\t{}\t{}".format(sb1, type(sb1)))
-      logging.debug("intermediate:\t{}\t{}".format(bin(intermediate).lstrip("0b"), type(intermediate)))
-      logging.debug("Reminder:\t{}\t{}".format(bin(reminder).lstrip("0b"), type(reminder)))
-      sb1 = reminder
-      
-      ## Update degree of polynomial  
-      sb1 = bin(sb1).lstrip("0b")
-      
-      for i, item in enumerate(sb1):
-         if int(item) == 0:
-            b1_degree = len(sb1) -1  - i 
-            continue
-
-         elif int(item) == 1:
-            b1_degree = len(sb1) -1 - i
-            break 
-      
-   logging.info("modular_division returns:\n\t0b{} {}".format(str(sb1), type(str(sb1)) ))
-   return "0b" + str(sb1)
-   
-   
    
 def main(): 
-#   logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+#   logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
 
-#   input_str = 0x3243f6a8885a308d313198a2e0370734
-#   cypher_key_128 = 0x2b7e151628aed2a6abf7158809cf4f3c
-#   round_keys = key_expansion(cypher_key_128, 4)
-#   encrypt_plain_text(input_str, round_keys)
+   input_str = 0x3243f6a8885a308d313198a2e0370734
+   cypher_key_128 = 0x2b7e151628aed2a6abf7158809cf4f3c
+   
+   round_keys = key_expansion(cypher_key_128, 4)
+   
+   encrypt_plain_text(input_str, round_keys)
 
 
-   tmp = multiply(0x57, 0x83)
-   print modular_division(tmp)
+#   tmp = multiply(0x57, 0x83)
+#   print modular_division(tmp) 
+   
+#   c0 = 0xd4 
+#   c1 = 0xbf 
+#   c2 = 0x5d 
+#   c3 = 0x30
+#   mod = 0b10001
+#   
+#   s0 = xtime(c0) ^ (xtime(c1)^c1) ^ c2 ^ c3
+#   s1 = c0 ^ xtime(c1) ^ (xtime(c2)^c2) ^ c3
+#   s2 = c0 ^ c1 ^ (xtime(c2)) ^ (xtime(c3)^c3)
+#   s3 = (xtime(c0)^c0) ^ c1 ^ c2 ^ (xtime(c3))
+#   
+#   print "s'00 = {}".format(hex(s0))
+#   print "s'10 = {}".format(hex(s1))
+#   print "s'20 = {}".format(hex(s2))
+#   print "s'30 = {}".format(hex(s3))
+#
 
 #   new_state.set_row(2, [5, 5, 5, 5])
 #   new_state.set_col(3, [10,12,14,16,40,34,12,1])
