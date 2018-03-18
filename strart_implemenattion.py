@@ -70,7 +70,7 @@ def get_blocks(input_hex, Nk, block_size_bits):
 
 
 def get_bytes(input_hex, input_bit_size):
-   
+    
    array_bytes = []
    mask = 0xFF
    for i in range(0, input_bit_size/8):
@@ -392,7 +392,7 @@ class State_Array():
       for i in range (0,4):
          row = self.get_row(i)
          for _ in range (0, i):
-            row = RotWord(row)
+            row = RotWord(row) 
             self.set_row(i, row)
 
 # 
@@ -420,8 +420,7 @@ class State_Array():
          new_column.append(c[0] ^ c[1] ^ (xtime(c[2])) ^ (xtime(c[3])^c[3]))
          new_column.append(xtime(c[0])^c[0] ^ c[1] ^ c[2] ^ (xtime(c[3])))
          self.set_col(i, new_column)
-         logging.debug("mix_columns:\n\
-         \tNew column[{}] = {}".format(i, new_column))   
+         logging.debug("mix_columns:\n\tNew column[{}] = {}".format(i, new_column))   
 
 
 
@@ -441,19 +440,30 @@ def encrypt_plain_text(plain_text, key_list):
    ## Pupulate state array with first 4 keys
    for i in range(0, Nb):
       new_col_vals = get_bytes(key_list[i], 32)
-#      print new_col_vals
       state.add_round_key(new_col_vals, i)
-   
+    
    
    ## Does loops throguh the algorith Nr-1 times
-#   for i in range(0, Nr):
-#      SubBytes(state)
+   for round_no in range(0, (Nr -2)):
+      state.sub_bytes()
+      state.shift_columns()
+      state.mix_columns()
+      for i in range(0,4):
+         key_no = (round_no+1)*4 + i
+         print "element no = {}".format(key_no)
+         key = get_bytes(key_list[key_no], 32)
+         state.add_round_key(key, i)
+
+
    state.sub_bytes()
    state.shift_columns()
-   state.mix_columns()
+   for i in range(0,4):
+      key_no = (Nr-1)*4 + i
+      print "element no = {}".format(key_no)
+      key = get_bytes(key_list[key_no], 32)
+      state.add_round_key(key, i)
 
-#      AddRoundKey(state, w[round*Nb, (round+1)*Nb-1])
-    
+   
    ## Prints array in hex
    array =  state.get_state_array()
    for row in array:
@@ -475,27 +485,8 @@ def main():
    round_keys = key_expansion(cypher_key_128, 4)
    
    encrypt_plain_text(input_str, round_keys)
+ 
 
-
-#   tmp = multiply(0x57, 0x83)
-#   print modular_division(tmp) 
-   
-#   c0 = 0xd4 
-#   c1 = 0xbf 
-#   c2 = 0x5d 
-#   c3 = 0x30
-#   mod = 0b10001
-#   
-#   s0 = xtime(c0) ^ (xtime(c1)^c1) ^ c2 ^ c3
-#   s1 = c0 ^ xtime(c1) ^ (xtime(c2)^c2) ^ c3
-#   s2 = c0 ^ c1 ^ (xtime(c2)) ^ (xtime(c3)^c3)
-#   s3 = (xtime(c0)^c0) ^ c1 ^ c2 ^ (xtime(c3))
-#   
-#   print "s'00 = {}".format(hex(s0))
-#   print "s'10 = {}".format(hex(s1))
-#   print "s'20 = {}".format(hex(s2))
-#   print "s'30 = {}".format(hex(s3))
-#
 
 #   new_state.set_row(2, [5, 5, 5, 5])
 #   new_state.set_col(3, [10,12,14,16,40,34,12,1])
