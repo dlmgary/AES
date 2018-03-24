@@ -388,6 +388,7 @@ class State_Array:
       for i in range (0,4):
          row = self.get_row(i)
          new_row =  get_bytes(inv_sub_word(array_to_int(row, 8)),32)
+#         print "i: {} \t{}".format(i, new_row)
          self.set_row(i, new_row)
 
          
@@ -477,7 +478,7 @@ class State_Array:
       return xtime(xtime(xtime(x))) ^ x
 
    def xtimee(self, x):
-      return xtime(xtime(xtime(x))) ^ xtime(xtime(x)) ^ xtime(x) ^ x
+      return xtime(xtime(xtime(x))) ^ xtime(xtime(x)) ^ xtime(x)
 
 #   InvMixColumns() operates on a column-by-column manner. 
 # theats each columns a four-term polynomial. In this case each 
@@ -530,13 +531,13 @@ def encrypt(plain_text, key_list):
    key_list = key_list
     
    state = State_Array(128, "", 10)
-   print "Start encrypt {}".format(hex(state.get_output_bytes()), type(state.get_output_bytes()))
+#   print "Start encrypt {}".format(hex(state.get_output_bytes()), type(state.get_output_bytes()))
 
    Nb = 4 
    Nr = 11
    
    state.set_initial_state(get_bytes(plain_text, 128))
-   print "encrypt {} {}".format(0, hex(state.get_output_bytes()), type(state.get_output_bytes()))
+#   print "encrypt {} {}".format(0, hex(state.get_output_bytes()), type(state.get_output_bytes()))
 
    ## Pupulate state array with first 4 keys
    for i in range(0, Nb):
@@ -603,43 +604,49 @@ def decrypt(cypher_text, key_list):
    for i in range(0, Nb):
       new_col_vals = get_bytes(key_list[offset + i], 32)
       state.add_round_key(new_col_vals, i)
-      print " key {} {}".format(new_col_vals, offset + i),
+#      print "Key {}: {} {}\n".format(offset + i, new_col_vals, type(new_col_vals[0])),
 
    
-   
+   print ""
    ## Does loops throguh the algorith Nr-1 times
    for round_no in range((Nr -2), 0, -1):
-      print "Decrypt {} {} {}".format(10-round_no, hex(state.get_output_bytes()), type(state.get_output_bytes()))
+#      print "Decrypt {}\t{} {}".format(10-round_no, hex(state.get_output_bytes()), type(state.get_output_bytes()))
 
       ## Shifts collumns
       state.inv_shift_rows() 
-      print "   shift_row {}".format(hex(state.get_output_bytes()))
+#      print "   shift_row\t{}".format(hex(state.get_output_bytes()))
 
       ## Substitutes bytes
       state.inv_sub_bytes()
-      print "   sub_bytes {}".format(hex(state.get_output_bytes()))
+#      print "   sub_bytes\t{}".format(hex(state.get_output_bytes()))
 
       ## Adds round key
       for i in range(0,4):
          key_no = round_no*4 + i
-#         print "w[{}]".format(round_no*4+i)
          key = get_bytes(key_list[key_no], 32)
          state.add_round_key(key, i)
-#         print " key {} {}".format(key_no, key),
          
-      print " \nadd_rnd_key {}".format(hex(state.get_output_bytes()))
+#      print "   add_rnd_key\t{}".format(hex(state.get_output_bytes()))
 
       
-      state.inv_shift_rows()
+      state.inv_mix_columns()
+#      print "   inv_mix_col\t{}\n".format(hex(state.get_output_bytes()))
 
+
+#   print ""
    state.inv_shift_rows() 
-   state.inv_sub_bytes()
-   
-   for i in range(3, -1, -1):
-#      print "w[{}]".format(i)
-      key = get_bytes(key_list[key_no], 32)
+#   print "   shift_row\t{}".format(hex(state.get_output_bytes()))
+
+   state.inv_sub_bytes() 
+#   print "   sub_bytes\t{}".format(hex(state.get_output_bytes()))
+
+#   for i in range(3, -1, -1):
+   for i in range(0, 4):
+      key = get_bytes(key_list[i], 32)
       state.add_round_key(key, i)
       
+#   print "Plain text \t{}\n".format(hex(state.get_output_bytes()))
+
 
 #   ## Prints array in hex
 #   array =  state.get_state_array()
@@ -651,6 +658,7 @@ def decrypt(cypher_text, key_list):
 #   ##      
 
    plain_text = state.get_output_bytes()
+
    return plain_text
  
  
@@ -668,15 +676,21 @@ def main():
    round_keys = [int(i) for i in round_keys]
    
 #   cypher_text = encrypt(plain_text, round_keys)
-    
+#   print "Cypher text: {} {}".format(hex(cypher_text), type(cypher_text))
+   
+   cypher_text = 0x112233445566778899aabbccddeeff
+   plain_text = decrypt(cypher_text, round_keys)
+   print "Plain text: {} {}".format(hex(plain_text), type(plain_text))
+
+   
+   
 #   print ""
 #   print "Plain text:\t{}".format(hex(plain_text))
 #   print "Key       :\t{}".format(hex(key))
 #   print "Cypher text:\t{}".format(hex(cypher_text))
 #   print "Correct txt:\t{}".format(hex(0x69c4e0d86a7b0430d8cdb78070b4c55a))
    
-   cypher_text = 0x69c4e0d86a7b0430d8cdb78070b4c55a
-   plain_text = decrypt(cypher_text, round_keys)
+   
    
 if __name__ == "__main__":
    main()
