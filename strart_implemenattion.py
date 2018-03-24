@@ -329,12 +329,12 @@ def modular_division_2(int1, modulus_bin):
 
 
 
-class State_Array:
+class State_Array():
    Nr = 0       # Number of rounds
    Nk = 0       # Key length
    Nb = 4       # Block size (always 4)
    Ncol = 4     # Number of columns in state (always 4)
-   matrix = []
+   matrix = [[0]*4,[0]*4,[0]*4,[0]*4]
    round_key = ""
       
    def __init__(self, Nk, key, rounds):
@@ -342,12 +342,13 @@ class State_Array:
       self.Nk = Nk
       self.round_key = key
 
-      # Creates 4x4 matrix and populates matrix with zeroes 
-      for row in range(0, 4):
-         new = []
-         for col in range(0, 4):
-            new.append(int(0))
-         self.matrix.append(new)
+      # Creates 4x4 matrix and populates matrix with zeroes
+#       
+#      for row in range(0, 4):
+#         new = []
+#         for col in range(0, 4):
+#            new.append(int(0))
+#         self.matrix.append(new)
    
    def get_state(self):
       return self.matrix
@@ -531,7 +532,6 @@ def encrypt(plain_text, key_list):
    key_list = key_list
     
    state = State_Array(128, "", 10)
-#   print "Start encrypt {}".format(hex(state.get_output_bytes()), type(state.get_output_bytes()))
 
    Nb = 4 
    Nr = 11
@@ -561,17 +561,6 @@ def encrypt(plain_text, key_list):
       key_no = (Nr-1)*4 + i
       key = get_bytes(key_list[key_no], 32)
       state.add_round_key(key, i)
-
-   """
-   ## Prints array in hex 
-   array =  state.get_state_array()
-   for row in array:
-      print ""
-      for column in row:
-         print hex(column).rstrip("L"),
-   print ""
-   ##      
-   """
    
    cypher_tex = state.get_output_bytes()
    
@@ -584,7 +573,6 @@ def decrypt(cypher_text, key_list):
    key_list = key_list
 
    state = State_Array(128, "", 10)
-   print "Start decrypt {}".format(hex(state.get_output_bytes()), type(state.get_output_bytes()))
 
    Nb = 4 
    Nr = 11
@@ -665,30 +653,28 @@ def decrypt(cypher_text, key_list):
    
 def main(): 
 #   logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
-
-#   plain_text = 0x3243f6a8885a308d313198a2e0370734
-#   key = 0x2b7e151628aed2a6abf7158809cf4f3c
+   
+#   print int("C",16)
+   print hex(ord("B"))
+   print chr(65)
+   
    
    plain_text = 0x00112233445566778899aabbccddeeff
+   print "Plain text:\t{} {}".format(hex(plain_text), type(plain_text))
+
    key = 0x000102030405060708090a0b0c0d0e0f
-   
+   print "Key:\t\t{} {}".format(hex(key), type(key))
+
+
+
    round_keys = key_expansion(key, 4)
    round_keys = [int(i) for i in round_keys]
-   
-#   cypher_text = encrypt(plain_text, round_keys)
-#   print "Cypher text: {} {}".format(hex(cypher_text), type(cypher_text))
-   
-   cypher_text = 0x112233445566778899aabbccddeeff
+    
+   cypher_text = encrypt(plain_text, round_keys)
    plain_text = decrypt(cypher_text, round_keys)
-   print "Plain text: {} {}".format(hex(plain_text), type(plain_text))
 
-   
-   
-#   print ""
-#   print "Plain text:\t{}".format(hex(plain_text))
-#   print "Key       :\t{}".format(hex(key))
-#   print "Cypher text:\t{}".format(hex(cypher_text))
-#   print "Correct txt:\t{}".format(hex(0x69c4e0d86a7b0430d8cdb78070b4c55a))
+   print "Cypher text:\t{} {}".format(hex(cypher_text), type(cypher_text))
+   print "Plain text:\t{} {}".format(hex(plain_text), type(plain_text))
    
    
    
