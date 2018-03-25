@@ -114,7 +114,7 @@ class State_Array():
    
    
    def __init__(self, input_array, Nk):
-      self.Nk = Nk
+      self.Nk = Nk 
       
       for row in range (0, 4):
          for column in range(0,4):
