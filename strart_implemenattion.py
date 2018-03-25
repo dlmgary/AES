@@ -72,8 +72,7 @@ def sub_word(word, bool):
 ## 
 def key_expansion(key, Nk, Nr):
    S_BOX = True
-   S_BOX_INV = False
-   RCON = aes_constants.RCON
+   RCON = aes_constants.RCON 
    
    w = []
    
@@ -88,16 +87,13 @@ def key_expansion(key, Nk, Nr):
 
       if i % Nk == 0:
          temp_key = array_to_int(RotWord(byte_array(temp_key, 4)))
-         temp_key = sub_word(temp_key, S_BOX)
-         temp_key = temp_key ^ RCON[i/Nk]
-         temp_key = temp_key ^ w[i-Nk]
+         temp_key = sub_word(temp_key, S_BOX) ^ RCON[i/Nk] ^ w[i-Nk]
          w.append(temp_key) 
          continue
 
       temp_key = temp_key ^ w[i-Nk]
       w.append(temp_key)
 
-   logging.info("Key expansion {}".format(w))
    return w
    
  
@@ -111,10 +107,19 @@ class State_Array():
    ENCRYPT = True
    DECRYPT = False
    
-   def __init__(self, Nk, rounds):
+#   def __init__(self, Nk, rounds):
        
-      self.Nrs = rounds
+#      self.Nrs = rounds
 #      self.Nk = Nk
+   
+   
+   def __init__(self, input_array, Nk):
+      self.Nk = Nk
+      
+      for row in range (0, 4):
+         for column in range(0,4):
+            self.matrix[row][column] = int(input_array[row+4*column])
+
       
    def get_row(self, row_no):
       return self.matrix[row_no][::]
@@ -134,11 +139,6 @@ class State_Array():
          row[col_no] = new_col[i]
          i += 1
          
-   def set_initial_state(self, input_array):
-      for row in range (0, 4):
-         for column in range(0,4):
-            self.matrix[row][column] = int(input_array[row+4*column])
-
    def add_round_key(self, r_key_array, col_no):
       for i in range (0, 4):
          old_value = self.matrix[i][col_no]
@@ -243,12 +243,15 @@ class State_Array():
                   
       return output
       
+      
+      
+      
+      
 def encrypt(plain_text, key_list):
    ENCRYPT = True
    Nb, Nr = 4, 11
 
-   state = State_Array(128, 10)
-   state.set_initial_state(byte_array(plain_text, 16))
+   state = State_Array(byte_array(plain_text, 16),128)
 
    ## Pupulate state array with first 4 keys
    for i in range(0, Nb):
@@ -275,17 +278,15 @@ def encrypt(plain_text, key_list):
       state.add_round_key(key, i)
       
    return state.get_output_bytes()
-    
+     
   
 def decrypt(cypher_text, key_list):
    DECRYPT = False
    
    Nb, Nr = 4, 11
-   state = State_Array(128, 10)
  
-   key_array = byte_array(cypher_text, 16)
-   state.set_initial_state(key_array)
- 
+   state = State_Array(byte_array(cypher_text, 16), 128)
+
    ## Pupulate state array with first 4 keys
    offset = Nr*4 - 4
    for i in range(0, Nb):
@@ -319,10 +320,10 @@ def main():
 #   logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
       
    plain_text = 0x00112233445566778899aabbccddeeff
-   print "Plain text:\t{} {}".format(hex(plain_text), type(plain_text))
+   print "Plain text:\t{}\t{}".format(hex(plain_text), type(plain_text))
 
    key = 0x000102030405060708090a0b0c0d0e0f
-   print "Key:\t\t{} {}".format(hex(key), type(key))
+   print "Key:\t\t{}\t{}".format(hex(key), type(key))
 
 
    round_keys = key_expansion(key, 4, 10)
@@ -331,8 +332,8 @@ def main():
    cypher_text = encrypt(plain_text, round_keys)
    plain_text = decrypt(cypher_text, round_keys)
 
-   print "Cypher text:\t{} {}".format(hex(cypher_text), type(cypher_text))
-   print "Plain text:\t{} {}".format(hex(plain_text), type(plain_text))
+   print "Cypher text:\t{}\t{}".format(hex(cypher_text), type(cypher_text))
+   print "Plain text:\t{}\t{}".format(hex(plain_text), type(plain_text))
    
    
 if __name__ == "__main__":
