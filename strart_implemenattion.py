@@ -2,46 +2,16 @@
 
 import aes_constants 
 import logging
-import sys
-
          
-def xtime(byte):
-   bit_7 = 0x80
-   if (byte & bit_7) == 0:
-      return byte << 1
-   else:
-      return (byte << 1 ^ 0x1b) & 0xFF
-
-def hex_to_str_align(hex_input, sizeof_in_bits):
-   
+def hex_align(hex_input):
    if type(hex_input) is int or long:
          string = str(hex(hex_input))
 
    string = string.lstrip("0x").rstrip("L")
-   string = string.zfill(sizeof_in_bits/4)
+   string = string.zfill(2)
    
-   return "0x" + string
-
-## 
-#
-#
-## 
-def get_blocks(input_hex, Nk, block_size_bits):
-   
-   array_bytes = []
-   mask = 0x0
-   n = Nk * (32/block_size_bits)
-   
-   # Creates bitwise mask
-   for i in range (0, block_size_bits/4):
-      mask = mask << 4 | 0xF
-   
-   for i in range(0, n):
-      array_bytes.append(input_hex >> block_size_bits*i & mask)
-   
-   return array_bytes[::-1]
-
-
+   return "0x" + string 
+ 
 def byte_array(input_hex, byte_no):
    array_bytes = []
    mask = 0xFF
@@ -73,7 +43,7 @@ def RotWord(word_list):
    new_list.append(word_list[0])
    return new_list
    
-   
+    
 ## 
 # Uses the values of word to pick corresponsing values from S-Box and 
 # returs those values.
@@ -90,8 +60,8 @@ def sub_word(word, bool):
       s_box = aes_constants.S_BOX_INV
    
    for i, item in enumerate(byte_list):
-      row = int(hex_to_str_align(item, 8)[2],16)
-      index = int(hex_to_str_align(item, 8)[3],16)
+      row = int(hex_align(item)[2],16)
+      index = int(hex_align(item)[3],16)
       new_list.append(s_box[row][index])
    
    return array_to_int(new_list)
@@ -132,23 +102,20 @@ def key_expansion(key, Nk, Nr):
    
  
 class State_Array():
-   Nr, Nk, Nb = 0, 0, 4      
+#   Nr, Nk, Nb = 0, 0, 4 
+#   Nb = 4
    matrix = [[0]*4,[0]*4,[0]*4,[0]*4]
-   round_key = ""
    S_BOX = True
    S_BOX_INV = False
    
    ENCRYPT = True
    DECRYPT = False
    
-   def __init__(self, Nk, key, rounds):
-      self.Nr = rounds
-      self.Nk = Nk
-      self.round_key = key
-   
-   def get_state(self):
-      return self.matrix
-   
+   def __init__(self, Nk, rounds):
+       
+      self.Nrs = rounds
+#      self.Nk = Nk
+      
    def get_row(self, row_no):
       return self.matrix[row_no][::]
       
@@ -221,43 +188,49 @@ class State_Array():
                row = self.RotWord(row, bool) 
                self.set_row(i, row)
  
-         
+   def xtime(self,byte):
+      bit_7 = 0x80
+      if (byte & bit_7) == 0:
+         return byte << 1
+      else:
+         return (byte << 1 ^ 0x1b) & 0xFF
+   
    def xtimeb(self, x):
-      return xtime(xtime(xtime(x))) ^ xtime(x) ^ x
+      return self.xtime(self.xtime(self.xtime(x))) ^ self.xtime(x) ^ x
       
    def xtimed(self, x):
-      return xtime(xtime(xtime(x))) ^ xtime(xtime(x)) ^ x
+      return self.xtime(self.xtime(self.xtime(x))) ^ self.xtime(self.xtime(x)) ^ x
       
    def xtime9(self, x):
-      return xtime(xtime(xtime(x))) ^ x
+      return self.xtime(self.xtime(self.xtime(x))) ^ x
 
    def xtimee(self, x):
-      return xtime(xtime(xtime(x))) ^ xtime(xtime(x)) ^ xtime(x)
+      return self.xtime(self.xtime(self.xtime(x))) ^ self.xtime(self.xtime(x)) ^ self.xtime(x)
       
    def xtime3(self, x):
-      return xtime(x) ^ x
+      return self.xtime(x) ^ x
 
-   
-   def mix_columns(self):
-      for i in range (0, 4):
-         new_column = []
-         c = self.get_col(i)
-         new_column.append(xtime(c[0]) ^ self.xtime3(c[1]) ^ c[2] ^ c[3])
-         new_column.append(c[0] ^ xtime(c[1]) ^ self.xtime3(c[2]) ^ c[3])
-         new_column.append(c[0] ^ c[1] ^ (xtime(c[2])) ^ self.xtime3(c[3]))
-         new_column.append(self.xtime3(c[0]) ^ c[1] ^ c[2] ^ (xtime(c[3])))
-         self.set_col(i, new_column)
-      
-   def inv_mix_columns(self):
-      for i in range (0, 4):
-         new_column = []
-         c = self.get_col(i)
-         new_column.append(self.xtimee(c[0]) ^ self.xtimeb(c[1]) ^ self.xtimed(c[2]) ^ self.xtime9(c[3]))
-         new_column.append(self.xtime9(c[0]) ^ self.xtimee(c[1]) ^ self.xtimeb(c[2]) ^ self.xtimed(c[3]))
-         new_column.append(self.xtimed(c[0]) ^ self.xtime9(c[1]) ^ self.xtimee(c[2]) ^ self.xtimeb(c[3]))
-         new_column.append(self.xtimeb(c[0]) ^ self.xtimed(c[1]) ^ self.xtime9(c[2]) ^ self.xtimee(c[3]))
-         self.set_col(i, new_column)
-   
+    
+   def mix_columns(self, bool):
+      if bool == True:
+         for i in range (0, 4):
+            new_column = []
+            c = self.get_col(i)
+            new_column.append(self.xtime(c[0]) ^ self.xtime3(c[1]) ^ c[2] ^ c[3])
+            new_column.append(c[0] ^ self.xtime(c[1]) ^ self.xtime3(c[2]) ^ c[3])
+            new_column.append(c[0] ^ c[1] ^ self.xtime(c[2]) ^ self.xtime3(c[3]))
+            new_column.append(self.xtime3(c[0]) ^ c[1] ^ c[2] ^ self.xtime(c[3]))
+            self.set_col(i, new_column)
+      else: 
+         for i in range (0, 4):
+            new_column = []
+            c = self.get_col(i)
+            new_column.append(self.xtimee(c[0]) ^ self.xtimeb(c[1]) ^ self.xtimed(c[2]) ^ self.xtime9(c[3]))
+            new_column.append(self.xtime9(c[0]) ^ self.xtimee(c[1]) ^ self.xtimeb(c[2]) ^ self.xtimed(c[3]))
+            new_column.append(self.xtimed(c[0]) ^ self.xtime9(c[1]) ^ self.xtimee(c[2]) ^ self.xtimeb(c[3]))
+            new_column.append(self.xtimeb(c[0]) ^ self.xtimed(c[1]) ^ self.xtime9(c[2]) ^ self.xtimee(c[3]))
+            self.set_col(i, new_column)
+
    def get_output_bytes(self): 
       output_array = []
       output = 0x0
@@ -272,11 +245,9 @@ class State_Array():
       
 def encrypt(plain_text, key_list):
    ENCRYPT = True
-   
-   state = State_Array(128, "", 10)
- 
    Nb, Nr = 4, 11
-   
+
+   state = State_Array(128, 10)
    state.set_initial_state(byte_array(plain_text, 16))
 
    ## Pupulate state array with first 4 keys
@@ -288,7 +259,8 @@ def encrypt(plain_text, key_list):
    for round_no in range(0, (Nr -2)):
       state.sub_bytes(ENCRYPT)
       state.shift_rows(ENCRYPT)
-      state.mix_columns()
+      state.mix_columns(ENCRYPT)
+       
       for i in range(0,4):
          key_no = (round_no+1)*4 + i
          key = byte_array(key_list[key_no], 4)
@@ -303,20 +275,17 @@ def encrypt(plain_text, key_list):
       state.add_round_key(key, i)
       
    return state.get_output_bytes()
-
+    
   
 def decrypt(cypher_text, key_list):
    DECRYPT = False
-   ENCRYPT = True
-   state = State_Array(128, "", 10)
-
+   
    Nb, Nr = 4, 11
+   state = State_Array(128, 10)
  
    key_array = byte_array(cypher_text, 16)
-   key_array = [int(i) for i in key_array]
-
    state.set_initial_state(key_array)
-
+ 
    ## Pupulate state array with first 4 keys
    offset = Nr*4 - 4
    for i in range(0, Nb):
@@ -328,13 +297,12 @@ def decrypt(cypher_text, key_list):
       state.shift_rows(DECRYPT) 
       state.sub_bytes(DECRYPT)
 
-      ## Adds round key
       for i in range(0,Nb):
          key_no = round_no*4 + i
          key = byte_array(key_list[key_no], 4)
          state.add_round_key(key, i)
       
-      state.inv_mix_columns()
+      state.mix_columns(DECRYPT)
 
    state.shift_rows(DECRYPT) 
    state.sub_bytes(DECRYPT) 
