@@ -66,37 +66,6 @@ def sub_word(word, bool):
    
    return array_to_int(new_list)
    
- 
-##
-# Generates a key schedule containing Nb (Nr + 1) keyes
-## 
-def key_expansion(key, Nk, Nr):
-   S_BOX = True
-   RCON = aes_constants.RCON 
-   
-   w = []
-   
-   ## Creates an array with   
-   for i in range(0, Nk):
-      w.append(key >> 32*i & 0xFFFFFFFF)
-   
-   w =  w[::-1]
-
-   for i in range(Nk, 4*(Nr+1)):
-      temp_key = w[i-1]
-
-      if i % Nk == 0:
-         temp_key = array_to_int(RotWord(byte_array(temp_key, 4)))
-         temp_key = sub_word(temp_key, S_BOX) ^ RCON[i/Nk] ^ w[i-Nk]
-         w.append(temp_key) 
-         continue
-
-      temp_key = temp_key ^ w[i-Nk]
-      w.append(temp_key)
-
-   return w
-   
- 
 class State_Array():
 #   Nr, Nk, Nb = 0, 0, 4 
 #   Nb = 4
@@ -106,13 +75,8 @@ class State_Array():
    
    ENCRYPT = True
    DECRYPT = False
-   
-#   def __init__(self, Nk, rounds):
-       
-#      self.Nrs = rounds
-#      self.Nk = Nk
-   
-   
+     
+
    def __init__(self, input_array, Nk):
       self.Nk = Nk 
       
@@ -145,11 +109,8 @@ class State_Array():
          self.matrix[i][col_no] = old_value ^ r_key_array[i]
    
    def sub_bytes(self, bool):
-      if bool == True:
-         box = self.S_BOX
-      else:
-         box = self.S_BOX_INV
-         
+      box = self.S_BOX if bool else self.S_BOX_INV
+               
       for i in range (0, 4):
          row = self.get_row(i)
          new_row =  byte_array(sub_word(array_to_int(row), box),4)
@@ -210,17 +171,17 @@ class State_Array():
    def xtime3(self, x):
       return self.xtime(x) ^ x
 
-    
    def mix_columns(self, bool):
       if bool == True:
          for i in range (0, 4):
             new_column = []
             c = self.get_col(i)
-            new_column.append(self.xtime(c[0]) ^ self.xtime3(c[1]) ^ c[2] ^ c[3])
-            new_column.append(c[0] ^ self.xtime(c[1]) ^ self.xtime3(c[2]) ^ c[3])
-            new_column.append(c[0] ^ c[1] ^ self.xtime(c[2]) ^ self.xtime3(c[3]))
-            new_column.append(self.xtime3(c[0]) ^ c[1] ^ c[2] ^ self.xtime(c[3]))
+            new_column.append(self.xtime(c[0])  ^ self.xtime3(c[1]) ^ c[2]              ^ c[3])
+            new_column.append(           c[0]   ^ self.xtime(c[1])  ^ self.xtime3(c[2]) ^ c[3])
+            new_column.append(           c[0]   ^ c[1]              ^ self.xtime(c[2])  ^ self.xtime3(c[3]))
+            new_column.append(self.xtime3(c[0]) ^ c[1]              ^ c[2]              ^ self.xtime(c[3]))
             self.set_col(i, new_column)
+            
       else: 
          for i in range (0, 4):
             new_column = []
@@ -231,7 +192,7 @@ class State_Array():
             new_column.append(self.xtimeb(c[0]) ^ self.xtimed(c[1]) ^ self.xtime9(c[2]) ^ self.xtimee(c[3]))
             self.set_col(i, new_column)
 
-   def get_output_bytes(self): 
+   def get_output(self): 
       output_array = []
       output = 0x0
       
@@ -243,9 +204,37 @@ class State_Array():
                   
       return output
       
-      
-      
-      
+    
+ 
+##
+# Generates a key schedule containing Nb (Nr + 1) keyes
+## 
+def key_expansion(key, Nk, Nr):
+   S_BOX = True
+   RCON = aes_constants.RCON 
+   
+   w = []
+   
+   ## Creates an array with   
+   for i in range(0, Nk):
+      w.append(key >> 32*i & 0xFFFFFFFF)
+   
+   w =  w[::-1]
+
+   for i in range(Nk, 4*(Nr+1)):
+      temp_key = w[i-1]
+
+      if i % Nk == 0:
+         temp_key = array_to_int(RotWord(byte_array(temp_key, 4)))
+         temp_key = sub_word(temp_key, S_BOX) ^ RCON[i/Nk] ^ w[i-Nk]
+         w.append(temp_key) 
+         continue
+
+      temp_key = temp_key ^ w[i-Nk]
+      w.append(temp_key)
+
+   return w
+   
       
 def encrypt(plain_text, key_list):
    ENCRYPT = True
@@ -277,8 +266,8 @@ def encrypt(plain_text, key_list):
       key = byte_array(key_list[key_no], 4)
       state.add_round_key(key, i)
       
-   return state.get_output_bytes()
-     
+   return state.get_output()
+      
   
 def decrypt(cypher_text, key_list):
    DECRYPT = False
@@ -312,30 +301,6 @@ def decrypt(cypher_text, key_list):
       key = byte_array(key_list[i], 4)
       state.add_round_key(key, i)
       
-   return state.get_output_bytes()
+   return state.get_output()
  
- 
-   
-def main(): 
-#   logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
-      
-   plain_text = 0x00112233445566778899aabbccddeeff
-   print "Plain text:\t{}\t{}".format(hex(plain_text), type(plain_text))
-
-   key = 0x000102030405060708090a0b0c0d0e0f
-   print "Key:\t\t{}\t{}".format(hex(key), type(key))
-
-
-   round_keys = key_expansion(key, 4, 10)
-   round_keys = [int(i) for i in round_keys]
-    
-   cypher_text = encrypt(plain_text, round_keys)
-   plain_text = decrypt(cypher_text, round_keys)
-
-   print "Cypher text:\t{}\t{}".format(hex(cypher_text), type(cypher_text))
-   print "Plain text:\t{}\t{}".format(hex(plain_text), type(plain_text))
-   
-   
-if __name__ == "__main__":
-   main()
  
