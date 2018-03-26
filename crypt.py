@@ -24,21 +24,24 @@ def write_block(f1, content):
 def main():
    BLOCK_SIZE = 16 
    
-   parse = argparse.ArgumentParser(description="Custom AES implementation. By deault it will encrypt the text")
-   parse.add_argument("file", metavar="s",type=str, help="The file to encrypt/decrypt")
-   parse.add_argument("key", metavar="k", type=str, help="encryption/decryption key")
+   parse = argparse.ArgumentParser(description="Custom AES implementation. By deault it will encrypt/decrypt text using 128-bit key size. ")
+   parse.add_argument("ifile", metavar="IN_FILE",type=str, help="The file to encrypt/decrypt")
+   parse.add_argument("ofile", metavar="OUT_FILE", type=str, help="Output file")
+   parse.add_argument("key", metavar="KEY", type=str, help="encryption/decryption key")
    parse.add_argument("-d", "--decrypt", action="store_true", help="Decryts the output")
+   parse.add_argument("-v", "--verbose", action="store_true", help="Show me that verbosity")
+   parse.add_argument("-k", metavar="--key_size", type=str, help="Set the encryption key to 128, 192 or 256 bits")
+
    
    args = parse.parse_args()
-   print args
    f1, f2 = None, None
       
    try: 
-      f1 = open(args.file, "r")
-      f2 = open("out", "w")
+      f1 = open(args.ifile, "r")
+      f2 = open(args.ofile, "w")
 
    except IOError:
-      print "[!] Cannot open {}".format(args.file)
+      print "[!] Cannot open {}".format(args.ifile)
       exit(0)
       
    key = ""
