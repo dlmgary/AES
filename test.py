@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from aes_constants import xtime
+#from aes_constants import xtime
 
 i = 0
 element = xtime(1)
