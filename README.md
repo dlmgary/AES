@@ -8,7 +8,6 @@ This is a custom implementation of the Advanced Encryption Standard (AES) using 
 - 512 bit key
 - No use of external libraries
 - Performance measurer (timer) 
-- Usable for all printable characters
 
 ## Resources 
 This implementation was implemented using the standard:
