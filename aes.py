@@ -65,7 +65,7 @@ def sub_word(word, bool):
       new_list.append(s_box[row][index])
    
    return array_to_int(new_list)
-   
+
 class State_Array():
 #   Nr, Nk, Nb = 0, 0, 4 
 #   Nb = 4
@@ -205,22 +205,37 @@ class State_Array():
       return output
       
     
+
  
 ##
 # Generates a key schedule containing Nb (Nr + 1) keyes
 ## 
-def key_expansion(key, Nk, Nr):
+def key_expansion(key, Nk):
+   
    S_BOX = True
    RCON = aes_constants.RCON 
+
+   ## Determines the number of rounds    
+   if Nk == 4:
+      Nr = 10
+      
+   elif Nk == 6:
+      Nr = 12
+      
+   elif Nk == 8:
+      Nr = 14
    
-   w = []
-   
+   else:
+      print "[!] Key expansion error"
+      exit(1)
+      
    ## Creates an array with   
+   w = []
    for i in range(0, Nk):
       w.append(key >> 32*i & 0xFFFFFFFF)
    
    w =  w[::-1]
-
+   
    for i in range(Nk, 4*(Nr+1)):
       temp_key = w[i-1]
 
@@ -236,71 +251,79 @@ def key_expansion(key, Nk, Nr):
    return w
    
       
-def encrypt(plain_text, key_list):
+def encrypt(plain_text, key_list, enc_or_dec):
    ENCRYPT = True
-   Nb, Nr = 4, 11
-
-   state = State_Array(byte_array(plain_text, 16),128)
-
-   ## Pupulate state array with first 4 keys
-   for i in range(0, Nb):
-      new_col_vals = byte_array(key_list[i], 4) 
-      state.add_round_key(new_col_vals, i)
-
-   ## Does loops throguh the algorith Nr-1 times
-   for round_no in range(0, (Nr -2)):
-      state.sub_bytes(ENCRYPT)
-      state.shift_rows(ENCRYPT)
-      state.mix_columns(ENCRYPT)
-       
-      for i in range(0,4):
-         key_no = (round_no+1)*4 + i
-         key = byte_array(key_list[key_no], 4)
-         state.add_round_key(key, i)
-
-   state.sub_bytes(ENCRYPT)
-   state.shift_rows(ENCRYPT)
-   
-   for i in range(0,4):
-      key_no = (Nr-1)*4 + i
-      key = byte_array(key_list[key_no], 4)
-      state.add_round_key(key, i)
-      
-   return state.get_output()
-      
-  
-def decrypt(cypher_text, key_list):
    DECRYPT = False
    
-   Nb, Nr = 4, 11
- 
-   state = State_Array(byte_array(cypher_text, 16), 128)
+   ## Sets the Nr for the encryption
+   Nb, Nr, Nk = 4, 0, 0
+   if len(key_list) == 44:
+      Nr, Nk = 10, 4
+      
+   elif len(key_list) == 52:
+      Nr, Nk = 12, 6
+   
+   elif len(key_list) == 60:
+      Nr, Nk = 14, 8
+   
+   else:
+      print "[!] Key error"
+      exit(0)
+   
+   KEY_BITS = Nk * 32
 
-   ## Pupulate state array with first 4 keys
-   offset = Nr*4 - 4
-   for i in range(0, Nb):
-      new_col_vals = byte_array(key_list[offset + i], 4)
-      state.add_round_key(new_col_vals, i)
+   state = State_Array(byte_array(plain_text, 16),KEY_BITS)
 
-   ## Does loops throguh the algorith Nr-1 times
-   for round_no in range((Nr -2), 0, -1):
-      state.shift_rows(DECRYPT) 
-      state.sub_bytes(DECRYPT)
+   if enc_or_dec == ENCRYPT:
+      
+      ## Pupulate state array with first 4 keys
+      for i in range(0, Nb):
+         new_col_vals = byte_array(key_list[i], 4) 
+         state.add_round_key(new_col_vals, i)
+      
+      ## Does loops throguh the algorith Nr-1 times
+      for round_no in range(0, (Nr - 1)):
+         state.sub_bytes(ENCRYPT)
+         state.shift_rows(ENCRYPT)
+         state.mix_columns(ENCRYPT)
+         
+         for i in range(0,4):
+            key_no = (round_no+1)*4 + i
+            key = byte_array(key_list[key_no], 4)
+            state.add_round_key(key, i)
 
-      for i in range(0,Nb):
-         key_no = round_no*4 + i
+      state.sub_bytes(ENCRYPT)
+      state.shift_rows(ENCRYPT)
+      
+      for i in range(0,4):
+         key_no = (Nr)*4 + i
          key = byte_array(key_list[key_no], 4)
          state.add_round_key(key, i)
-      
-      state.mix_columns(DECRYPT)
+         
+   elif enc_or_dec == DECRYPT:
+      ## Populates state array with first 4 keys
+      offset = Nr*4 
+      for i in range(0, Nb):
+         new_col_vals = byte_array(key_list[offset + i], 4)
+         state.add_round_key(new_col_vals, i)
 
-   state.shift_rows(DECRYPT) 
-   state.sub_bytes(DECRYPT) 
+      ## Does loops through the algorithm Nr-1 times
+      for round_no in range((Nr -1), 0, -1):
+         state.shift_rows(DECRYPT) 
+         state.sub_bytes(DECRYPT)
 
-   for i in range(0, Nb):
-      key = byte_array(key_list[i], 4)
-      state.add_round_key(key, i)
-      
+         for i in range(0,Nb):
+            key_no = round_no*4 + i
+            key = byte_array(key_list[key_no], 4)
+            state.add_round_key(key, i)
+         
+         state.mix_columns(DECRYPT)
+
+      state.shift_rows(DECRYPT) 
+      state.sub_bytes(DECRYPT) 
+
+      for i in range(0, Nb):
+         key = byte_array(key_list[i], 4)
+         state.add_round_key(key, i)
+
    return state.get_output()
- 
- 
