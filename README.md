@@ -28,3 +28,16 @@ https://en.wikipedia.org/wiki/Finite_field_arithmetic
 | **AES 512**   | **16 (512 bits)**| **4 blocks**        | **18 rounds ?**        |  **Not yet**|
 
 
+## Usage
+
+This repo comes with an already included `input_test.txt` that you can use to test that the script is working propertly. After you've cloned the repor you can run the script by simply
+
+To encrypt simply run
+```
+python crypt input_test.txt output.enc PASSWORD1234
+```
+
+and to decrpyt
+```
+python crypt -d output.enc input_test.dec PASSWORD1234
+```
