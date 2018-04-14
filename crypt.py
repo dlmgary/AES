@@ -37,64 +37,27 @@ def main():
       print "[!] Cannot open {}".format(args.ifile)
       exit(0)
    
-   if args.loop == False:
-      ## Gets the key ready
-      round_keys = key_expansion(args.key, NK)
+   ## Gets the key ready
+   round_keys = key_expansion(args.key, NK)
 
-      if args.decrypt == True:
-         ## Decrypt
-            plain_text = fd_in.read()
-            cypher_text = aes(plain_text, round_keys)
-            fd_out.write(bytearray(cypher_text))
-
-            fd_in.close()
-            fd_out.close()
-      
-      else: 
-         ## Encrypt
-            cypher_text = fd_in.read()
-            plain_text = aes(cypher_text, round_keys, DECRYPT)
-            fd_out.write(bytearray(plain_text))
-
-            fd_in.close()
-            fd_out.close()
-   
-   if args.loop == True:
-
-         round_keys = key_expansion(args.key, NK)
-
-         ################################
-         # Encrypt
-         print "START ENCRYPTION"
+   if args.decrypt == True:
+      ## Decrypt
          plain_text = fd_in.read()
          cypher_text = aes(plain_text, round_keys)
          fd_out.write(bytearray(cypher_text))
-         
-                     
+
          fd_in.close()
          fd_out.close()
-         
-         
-         ################################
-         # Decrypt
-         print "START DECRYPTION"
-         fd_in = open(args.ofile, "r")
-         fd_out = open("tmp.txt", "w")
-      
+
+   else: 
+      ## Encrypt
          cypher_text = fd_in.read()
          plain_text = aes(cypher_text, round_keys, DECRYPT)
          fd_out.write(bytearray(plain_text))
-         
+
          fd_in.close()
          fd_out.close()
-         
-         with open(args.ifile, "r") as enc_file:
-            print "\n-------- Encrypted file ------\n{}".format(enc_file.read())
-
-         with open("tmp.txt", "r") as dec_file:
-            print "\n-------- Decryped file ------\n{}".format(dec_file.read())
-
-            
+   
 
 
 if __name__ == "__main__":
