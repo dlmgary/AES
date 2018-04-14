@@ -10,7 +10,6 @@ def main():
    text using 128-bit key size. 
    """
    parse = argparse.ArgumentParser(description=description)
-
    parse.add_argument("ifile", metavar="IN_FILE",type=str, help="The file to encrypt/decrypt")
    parse.add_argument("ofile", metavar="OUT_FILE", type=str, help="Output file")
    parse.add_argument("key", metavar="KEY", type=str, help="encryption/decryption key")
@@ -18,7 +17,6 @@ def main():
    parse.add_argument("-v", "--verbose", action="store_true", help="Show me that verbosity")
    parse.add_argument("-k", metavar="--key_size", type=str, help="Set the encryption key to 128, 192 or 256 bits")
    parse.add_argument("-l", "--loop", action="store_true", help="Encryps then decrypts and the print both console")
-
    args = parse.parse_args()
 
    BLOCK_SIZE = 16 
@@ -37,11 +35,11 @@ def main():
       print "[!] Cannot open {}".format(args.ifile)
       exit(0)
    
-   ## Gets the key ready
+   # Gets the key ready
    round_keys = key_expansion(args.key, NK)
 
+   # Decrypt
    if args.decrypt == True:
-      ## Decrypt
          plain_text = fd_in.read()
          cypher_text = aes(plain_text, round_keys)
          fd_out.write(bytearray(cypher_text))
@@ -49,8 +47,8 @@ def main():
          fd_in.close()
          fd_out.close()
 
+   # Encrypt
    else: 
-      ## Encrypt
          cypher_text = fd_in.read()
          plain_text = aes(cypher_text, round_keys, DECRYPT)
          fd_out.write(bytearray(plain_text))
@@ -58,7 +56,6 @@ def main():
          fd_in.close()
          fd_out.close()
    
-
-
+   
 if __name__ == "__main__":
    main()
